@@ -22,10 +22,6 @@ function progressbar {
 # Copy language file
 function copy_lang {
     lang=$1
-
-    index_keys=$(jq -r 'to_entries[] | "\"\(.key)\","' langindex.json)
-    index_keys=${index_keys:0:${#index_keys}-1}
-
     hyphenlang=${lang/_/-}
     langfilepath=$LANG_PATH/$hyphenlang.json
     cp "$LANGPACKS_PATH"/"$lang".json "$langfilepath"
@@ -37,16 +33,22 @@ function copy_lang {
         mv /tmp/moodle-langtmp.json "$langfilepath"
     fi
 
+    # Crear archivo temporal con la lista de claves permitidas (en formato JSON array)
+    keys_file=$(mktemp)
+    jq -c '[keys[]]' langindex.json > "$keys_file"
 
-    # Remove strings non exiting on langindex.
-    query="with_entries(select([.key] | inside([$index_keys])))"
-    jq --indent 2 -r "$query" "$langfilepath" > /tmp/moodle-langtmp.json
+    # Filtrar el archivo de idioma quedándose solo con las claves que existen en langindex.json
+    jq --indent 2 --slurpfile keys "$keys_file" 'with_entries(select(.key as $k | $keys[0] | index($k)))' "$langfilepath" > /tmp/moodle-langtmp.json
+
+    # Eliminar archivo temporal
+    rm "$keys_file"
+
     mv /tmp/moodle-langtmp.json "$langfilepath"
 
     name=$(jq -r .\""$lang"\".name "$LANGPACKS_PATH"/languages.json)
     local=$(jq -r .\""$lang"\".local "$LANGPACKS_PATH"/languages.json)
     translated=$(jq -r '. | length' "$langfilepath")
-    percentage=$(echo "($translated * 100) /$LANGINDEX_STRINGS" | bc)
+    percentage=$(( (translated * 100) / LANGINDEX_STRINGS ))
     progressbar "$percentage"
     echo -e "Generated $hyphenlang\t $translated of $LANGINDEX_STRINGS\t $bar ($local local)"
 
@@ -129,6 +131,7 @@ function get_languages {
     print_title 'Copying existing languages'
     # Existing languages, copy and clean the files.
     langs=$(jq -r '.languages | keys[]' ../moodle.config.json)
+    langs=${langs//$'\r'/}
     for lang in $langs; do
         lang=${lang//-/_}
         copy_lang "$lang"
