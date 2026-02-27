@@ -45,7 +45,6 @@ export class CoreSitePickerComponent implements OnInit {
      */
     async ngOnInit(): Promise<void> {
         this.selectedSite.set(this.initialSite() || CoreSites.getCurrentSiteId());
-
         // Load the sites.
         const sites = await CoreSites.getSites();
 

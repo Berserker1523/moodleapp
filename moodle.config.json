@@ -87,7 +87,21 @@
         "high": 120
     },
     "customurlscheme": "moodlemobile",
-    "sites": [],
+    "displayqronsitescreen": false,
+    "sites": [
+        {
+            "url": "https://elearning.orlandocarcamo.com",
+            "title": "Cursos de Orlando Cárcamo",
+            "staging": false,
+            "demoMode": false
+        },
+        {
+            "url": "https://elearning.orlandocarcamo.com",
+            "title": "Cursos de Jesús Cárcamo",
+            "staging": false,
+            "demoMode": false
+        }
+    ],
     "multisitesdisplay": "",
     "sitefindersettings": {},
     "onlyallowlistedsites": false,
